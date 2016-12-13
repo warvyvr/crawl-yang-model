@@ -1,6 +1,6 @@
 import scrapy
 import sys, os
-from crwalyangmodel.items import YangModelItem
+from crawlyangmodel.items import YangModelItem
 
 root_url = "https://datatracker.ietf.org"
 
@@ -69,7 +69,7 @@ class IetfMainPageSpider(scrapy.Spider):
             file.close()
 
 
-        from crwalyangmodel.xym import xym
+        from xym import xym
         #print(xym)
 
         extracted_models = xym("tmp.txt","./","./", False, False, 0)

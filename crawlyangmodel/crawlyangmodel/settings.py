@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Scrapy settings for crwalyangmodel project
+# Scrapy settings for crawlyangmodel project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -9,14 +9,14 @@
 #     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'crwalyangmodel'
+BOT_NAME = 'crawlyangmodel'
 
-SPIDER_MODULES = ['crwalyangmodel.spiders']
-NEWSPIDER_MODULE = 'crwalyangmodel.spiders'
+SPIDER_MODULES = ['crawlyangmodel.spiders']
+NEWSPIDER_MODULE = 'crawlyangmodel.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'crwalyangmodel (+http://www.yourdomain.com)'
+#USER_AGENT = 'crawlyangmodel (+http://www.yourdomain.com)'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.59 Safari/537.36'
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -47,13 +47,13 @@ CONCURRENT_REQUESTS_PER_IP = 10
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    'crwalyangmodel.middlewares.MyCustomSpiderMiddleware': 543,
+#    'crawlyangmodel.middlewares.MyCustomSpiderMiddleware': 543,
 #}
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    'crwalyangmodel.middlewares.MyCustomDownloaderMiddleware': 543,
+#    'crawlyangmodel.middlewares.MyCustomDownloaderMiddleware': 543,
 #}
 
 # Enable or disable extensions
@@ -65,7 +65,7 @@ CONCURRENT_REQUESTS_PER_IP = 10
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'crwalyangmodel.pipelines.YangModelPipeline': 300,
+    'crawlyangmodel.pipelines.YangModelPipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
