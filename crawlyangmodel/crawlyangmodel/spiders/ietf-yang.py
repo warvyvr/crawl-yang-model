@@ -1,6 +1,7 @@
 import scrapy
 import sys, os
 from crawlyangmodel.items import YangModelItem
+from xym import xym
 
 root_url = "https://datatracker.ietf.org"
 
@@ -63,18 +64,13 @@ class IetfMainPageSpider(scrapy.Spider):
         #return YangModelItem(**args)
 
     def parse_artifact(self, response):
-        #import pdb;pdb.set_trace()
-        with open("tmp.txt","wb") as file:
-            file.write(response.body)
-            file.close()
 
+        content = response.body.split("\n")
 
-        from xym import xym
-        #print(xym)
+        ye = xym.YangModuleExtractor("dummy.py","./","./", False, False, 0)
+        extracted_yang = ye.extract_yang_model(content)
+        print(extracted_yang)
 
-        extracted_models = xym("tmp.txt","./","./", False, False, 0)
-        os.remove("tmp.txt")
-        print(extracted_models)
 
 
 
