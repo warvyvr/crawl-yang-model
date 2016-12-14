@@ -1,4 +1,5 @@
 import scrapy
+from scrapy.utils import log
 import sys, os
 from crawlyangmodel.items import YangModelItem
 from xym import xym
@@ -13,6 +14,7 @@ class IetfMainPageSpider(scrapy.Spider):
     ]
 
     def parse(self, response):
+        self.logger.info("ready to parse ietf main page")
         area_names = response.css("h2").xpath("text()").extract()
         areas = response.css(".table-condensed")
         for index,value in enumerate(areas):
@@ -27,6 +29,7 @@ class IetfMainPageSpider(scrapy.Spider):
                 yield scrapy.Request(**args)
 
     def parse_wg_page(self, response):
+        self.logger.info("ready to parse workgroup page")
         tables = response.css(".table-condensed")
         for index, table in enumerate(tables):
             artifacts = table.xpath("tbody/tr")
@@ -44,6 +47,7 @@ class IetfMainPageSpider(scrapy.Spider):
                     yield scrapy.Request(**args)
 
     def parse_artifact_page(self, response):
+        self.logger.info("ready to parse artifact(RFC/W-D/I-D)")
         url = None
         for i in [4,5,6]:
             text = response.css("table").xpath("tbody/tr[%d]/td[2]/a[1]/text()" %(i)).extract()
@@ -57,19 +61,26 @@ class IetfMainPageSpider(scrapy.Spider):
         args = {
                 "area"      : response.meta["area"],
                 "wg"        : response.meta["wg"],
-                "title"      : response.meta["model_name"],
+                "title"     : response.meta["model_name"],
                 "url"       : url
         }
         yield scrapy.Request(url, self.parse_artifact)
         #return YangModelItem(**args)
 
     def parse_artifact(self, response):
+        self.logger.info("ready to extract yang model")
 
         content = response.body.split("\n")
 
-        ye = xym.YangModuleExtractor("dummy.py","./","./", False, False, 0)
-        extracted_yang = ye.extract_yang_model(content)
-        print(extracted_yang)
+        ye = xym.YangModuleExtractor("dummy.py","./","./", False, 1)
+        ye.extract_yang_model(content)
+        extracted_yang = ye.get_extracted_models()
+        if (extracted_yang is None):
+            self.logger.warning("extracted module from <%s> is empty" %(response.url))
+            #un = UnavailableItem(response.url)
+            #return un
+        else:
+            print("extracted yang model: [%s]" ",".join(extracted_yang))
 
 
 

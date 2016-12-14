@@ -21,3 +21,6 @@ class YangModelItem(scrapy.Item):
     url  = scrapy.Field()
     last_update = scrapy.Field(serializer=str)
 
+class UnavailableItem(scrapy.Item):
+    url = scrapy.Field()
+    
