@@ -68,19 +68,21 @@ class IetfMainPageSpider(scrapy.Spider):
         #return YangModelItem(**args)
 
     def parse_artifact(self, response):
-        self.logger.info("ready to extract yang model")
+        self.logger.info("ready to extract yang model from url: %s" %(response.url))
+        content = [m+'\n' for m in response.body.split("\n")]
 
-        content = response.body.split("\n")
+        if not os.path.exists('./yang-files'):
+            os.makedirs('./yang-files')
 
-        ye = xym.YangModuleExtractor("dummy.py","./","./", False, 1)
+        ye = xym.YangModuleExtractor(response.url, "./yang-files", strict=False,
+                                     strict_examples=False, debug_level=0)
         ye.extract_yang_model(content)
         extracted_yang = ye.get_extracted_models()
-        if (extracted_yang is None):
+
+        if (len(extracted_yang) == 0):
             self.logger.warning("extracted module from <%s> is empty" %(response.url))
-            #un = UnavailableItem(response.url)
-            #return un
         else:
-            print("extracted yang model: [%s]" ",".join(extracted_yang))
+            print("extracted yang model: [%s]" %(",".join(extracted_yang)))
 
 
 
