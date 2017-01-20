@@ -69,7 +69,7 @@ class IetfMainPageSpider(scrapy.Spider):
 
     def parse_artifact(self, response):
         self.logger.info("ready to extract yang model from url: %s" %(response.url))
-        content = [m+'\n' for m in response.body.split("\n")]
+        content = response.body.splitlines(True)
 
         if not os.path.exists('./yang-files'):
             os.makedirs('./yang-files')
