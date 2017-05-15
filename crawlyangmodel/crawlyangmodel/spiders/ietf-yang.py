@@ -17,6 +17,7 @@ class IetfMainPageSpider(scrapy.Spider):
         self.logger.info("ready to parse ietf main page")
         area_names = response.css("h2").xpath("text()").extract()
         areas = response.css(".table-condensed")
+        wg_params_list = []
         for index,value in enumerate(areas):
             for index2, wg_item in enumerate(value.xpath("tbody/tr")):
                 wg_name = wg_item.xpath("td[3]/text()").extract()[0]
@@ -26,11 +27,18 @@ class IetfMainPageSpider(scrapy.Spider):
                         "callback"  : self.parse_wg_page,
                         "meta"      : {"area":area_names[index], "wg":wg_name}
                 }
-                yield scrapy.Request(**args)
+                wg_params_list.append(args)
+
+        for index, wg in enumerate(wg_params_list):
+            self.logger.info(" WG scrawl, progress [%d/%d] " % (index+1, len(wg_params_list)))
+            yield scrapy.Request(**wg)
 
     def parse_wg_page(self, response):
-        self.logger.info("ready to parse workgroup page")
+        self.logger.info("---> parse workgroup page")
+        self.logger.info(" the wg url is %s" % (response.url))
+        self.logger.info(" workgroup name: %s" % (response.meta['wg']))
         tables = response.css(".table-condensed")
+        artifact_param_list = []
         for index, table in enumerate(tables):
             artifacts = table.xpath("tbody/tr")
             for index, artifact in enumerate(artifacts):
@@ -44,10 +52,17 @@ class IetfMainPageSpider(scrapy.Spider):
                             "callback"  : self.parse_artifact_page,
                             "meta"      : {"area": response.meta["area"], "wg":response.meta["wg"], "model_name": name}
                     }
-                    yield scrapy.Request(**args)
+
+                    artifact_param_list.append(args)
+
+        for index, artifact in enumerate(artifact_param_list):
+            self.logger.info(" artifact for WG, progress [%d/%d]" % (index+1, len(artifact_param_list)))
+            self.logger.info(" the target url %s" % (artifact['url']))
+            yield scrapy.Request(**artifact)
 
     def parse_artifact_page(self, response):
-        self.logger.info("ready to parse artifact(RFC/W-D/I-D)")
+        self.logger.info("===> parse artifacts...")
+        self.logger.info("area:%s, wg:%s, model_name:%s" %(response.meta['area'], response.meta['wg'], response.meta['model_name']))
         url = None
         for i in [4,5,6]:
             text = response.css("table").xpath("tbody/tr[%d]/td[2]/a[1]/text()" %(i)).extract()
@@ -84,10 +99,12 @@ class IetfMainPageSpider(scrapy.Spider):
         else:
             print("extracted yang model: [%s]" %(",".join(extracted_yang)))
 
+        # the yield is used to allow scrapy to save meta to a file.
+        meta = {
+            "area" : response.meta['area'],
+            "wg"   : response.meta['wg'],
+            "title": response.meta['title'],
+            "url"  : response.meta['url']
+        }
 
-
-
-
-
-
-
+        yield meta
