@@ -107,7 +107,8 @@ class IetfMainPageSpider(scrapy.Spider):
             "area" : response.meta['area'],
             "wg"   : response.meta['wg'],
             "title": response.meta['title'],
-            "url"  : response.url
+            "url"  : response.url,
+            "yangs": extracted_yang
         }
 
         yield meta
