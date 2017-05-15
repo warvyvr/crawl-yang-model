@@ -74,12 +74,15 @@ class IetfMainPageSpider(scrapy.Spider):
                 break
 
         args = {
-                "area"      : response.meta["area"],
-                "wg"        : response.meta["wg"],
-                "title"     : response.meta["model_name"],
-                "url"       : url
+                "url"       : url,
+                "callback"  : self.parse_artifact,
+                "meta"      : {"area":response.meta["area"],"wg":response.meta["wg"],"title":response.meta["model_name"]}
         }
-        yield scrapy.Request(url, self.parse_artifact)
+
+        if url is not None:
+            yield scrapy.Request(**args)
+        else:
+            print "no available url for further parsing(area:%s,wg:%s)" %(response.meta['area'], response.meta['wg'])
         #return YangModelItem(**args)
 
     def parse_artifact(self, response):
@@ -104,7 +107,7 @@ class IetfMainPageSpider(scrapy.Spider):
             "area" : response.meta['area'],
             "wg"   : response.meta['wg'],
             "title": response.meta['title'],
-            "url"  : response.meta['url']
+            "url"  : response.url
         }
 
         yield meta
