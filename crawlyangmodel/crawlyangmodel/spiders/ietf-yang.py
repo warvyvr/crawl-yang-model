@@ -12,6 +12,7 @@ class IetfMainPageSpider(scrapy.Spider):
     start_urls = [
         "https://datatracker.ietf.org/wg/"
     ]
+    bad_urls = {"area":[], "wg":[],"artifact":[]}
 
     def parse(self, response):
         self.logger.info("ready to parse ietf main page")
@@ -25,6 +26,7 @@ class IetfMainPageSpider(scrapy.Spider):
                 args = {
                         "url"       : root_url + wg_relative_link,
                         "callback"  : self.parse_wg_page,
+                        "errback"   : self.errback_area_request,
                         "meta"      : {"area":area_names[index], "wg":wg_name}
                 }
                 wg_params_list.append(args)
@@ -50,8 +52,11 @@ class IetfMainPageSpider(scrapy.Spider):
                     args = {
                             "url"       : root_url+short_url,
                             "callback"  : self.parse_artifact_page,
-                            "meta"      : {"area": response.meta["area"], "wg":response.meta["wg"], "model_name": name}
+                            "errback"   : self.errback_wg_request,
+                            "meta"      : response.meta
+#                            "meta"      : {"area": response.meta["area"], "wg":response.meta["wg"], "model_name": name}
                     }
+                    args['meta']['model_name'] = name
 
                     artifact_param_list.append(args)
 
@@ -76,8 +81,11 @@ class IetfMainPageSpider(scrapy.Spider):
         args = {
                 "url"       : url,
                 "callback"  : self.parse_artifact,
-                "meta"      : {"area":response.meta["area"],"wg":response.meta["wg"],"title":response.meta["model_name"]}
-        }
+                "errback"   : self.errback_artifact_request,
+                'meta'      : response.meta,
+#                "meta"      : {"area":response.meta["area"],"wg":response.meta["wg"],"title":response.meta["model_name"]}
+            }
+        args['meta']['title'] = response.meta['model_name']
 
         if url is not None:
             yield scrapy.Request(**args)
@@ -112,3 +120,18 @@ class IetfMainPageSpider(scrapy.Spider):
         }
 
         yield meta
+
+    def close(self, reason):
+        print ("=====spider close=====")
+        print self.bad_urls
+
+    def errback_area_request(self, failure):
+        self.bad_urls['area'].append(failure.request.url)
+
+    def errback_wg_request(self, failure):
+        self.bad_urls['wg'].append(failure.request.url)
+
+    def errback_artifact_request(self, failure):
+        print "=====>", repr(failure)
+        self.bad_urls['artifact'].append(failure.request.url)
+
