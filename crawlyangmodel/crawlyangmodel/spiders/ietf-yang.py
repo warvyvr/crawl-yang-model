@@ -48,6 +48,7 @@ class IetfMainPageSpider(scrapy.Spider):
                 if ( len(condition) > 0 and condition[0] == u"\u262f"):
                     short_url = artifact.xpath("td[2]/div/a/@href").extract()[0]
                     name = artifact.xpath("td[2]/div/b/text()").extract()[0]
+                    print name
                     self.artifact_name = name
                     args = {
                             "url"       : root_url+short_url,
@@ -59,11 +60,15 @@ class IetfMainPageSpider(scrapy.Spider):
                     args['meta']['model_name'] = name
 
                     artifact_param_list.append(args)
+                    yield scrapy.Request(**args)
 
-        for index, artifact in enumerate(artifact_param_list):
-            self.logger.info(" artifact for WG, progress [%d/%d]" % (index+1, len(artifact_param_list)))
-            self.logger.info(" the target url %s" % (artifact['url']))
-            yield scrapy.Request(**artifact)
+        #import pprint
+        #pprint.pprint(artifact_param_list)
+
+        #for index, artifact in enumerate(artifact_param_list):
+        #    self.logger.info(" artifact for WG, progress [%d/%d]" % (index+1, len(artifact_param_list)))
+        #    self.logger.info(" the target url %s" % (artifact['url']))
+        #    yield scrapy.Request(**artifact)
 
     def parse_artifact_page(self, response):
         self.logger.info("===> parse artifacts...")
@@ -114,10 +119,12 @@ class IetfMainPageSpider(scrapy.Spider):
         meta = {
             "area" : response.meta['area'],
             "wg"   : response.meta['wg'],
-            "title": response.meta['title'],
+            "title": response.meta['model_name'],
             "url"  : response.url,
             "yangs": extracted_yang
         }
+
+        print "title:------>", meta['title']
 
         yield meta
 
