@@ -8,7 +8,7 @@ root_url = "https://datatracker.ietf.org"
 
 class IetfMainPageSpider(scrapy.Spider):
     name = "ietf-yang"
-    allowed_domains = ["ietf.org"]
+    allowed_domains = ["ietf.org","rfc-editor.org"]
     start_urls = [
         "https://datatracker.ietf.org/wg/"
     ]
@@ -32,7 +32,7 @@ class IetfMainPageSpider(scrapy.Spider):
                 wg_params_list.append(args)
 
         for index, wg in enumerate(wg_params_list):
-            self.logger.info(" WG scrawl, progress [%d/%d] " % (index+1, len(wg_params_list)))
+            self.logger.info("scawling work group page, progress [%d/%d] " % (index+1, len(wg_params_list)))
             yield scrapy.Request(**wg)
 
     def parse_wg_page(self, response):
@@ -44,11 +44,23 @@ class IetfMainPageSpider(scrapy.Spider):
         for index, table in enumerate(tables):
             artifacts = table.xpath("tbody/tr")
             for index, artifact in enumerate(artifacts):
+                if artifact.xpath("./@class") and \
+                    artifact.xpath("./@class").extract()[0] =='info' and \
+                    artifact.xpath("./th[2]/text()"):
+                    tmp_str =  artifact.xpath("./th[2]/text()").extract()[0]
+                    if (tmp_str.find('Active') != -1):
+                        category = "WorkGroup Draft"
+                    elif (tmp_str.find('RFC') != -1):
+                        category = "RFC"
+                    elif (tmp_str.find('Related') != -1):
+                        category = "Internet Draft"
+                    else:
+                        category = "Unknown"
+
                 condition = artifact.xpath("td[3]/span[2]/span/text()").extract()
                 if ( len(condition) > 0 and condition[0] == u"\u262f"):
                     short_url = artifact.xpath("td[2]/div/a/@href").extract()[0]
                     name = artifact.xpath("td[2]/div/b/text()").extract()[0]
-                    print name
                     self.artifact_name = name
                     args = {
                             "url"       : root_url+short_url,
@@ -58,25 +70,19 @@ class IetfMainPageSpider(scrapy.Spider):
 #                            "meta"      : {"area": response.meta["area"], "wg":response.meta["wg"], "model_name": name}
                     }
                     args['meta']['model_name'] = name
-
-                    artifact_param_list.append(args)
+                    args['meta']['category'] = category
+                    #artifact_param_list.append(args)
                     yield scrapy.Request(**args)
 
-        #import pprint
-        #pprint.pprint(artifact_param_list)
-
-        #for index, artifact in enumerate(artifact_param_list):
-        #    self.logger.info(" artifact for WG, progress [%d/%d]" % (index+1, len(artifact_param_list)))
-        #    self.logger.info(" the target url %s" % (artifact['url']))
-        #    yield scrapy.Request(**artifact)
 
     def parse_artifact_page(self, response):
         self.logger.info("===> parse artifacts...")
         self.logger.info("area:%s, wg:%s, model_name:%s" %(response.meta['area'], response.meta['wg'], response.meta['model_name']))
         url = None
+
         for i in [4,5,6]:
             text = response.css("table").xpath("tbody/tr[%d]/td[2]/a[1]/text()" %(i)).extract()
-            if (len(text) == 0 or "".join(text).strip().find("plain text") == -1):
+            if (len(text) == 0 or text[1].find("plain text") == -1):
                 continue
             links = response.css("table").xpath("tbody/tr[%d]/td[2]/a[1]/@href" %(i)).extract()
             if (len(links) != 0):
@@ -95,8 +101,7 @@ class IetfMainPageSpider(scrapy.Spider):
         if url is not None:
             yield scrapy.Request(**args)
         else:
-            print "no available url for further parsing(area:%s,wg:%s)" %(response.meta['area'], response.meta['wg'])
-        #return YangModelItem(**args)
+            self.logger.warning("no available url for further parsing(area:%s,wg:%s)" %(response.meta['area'], response.meta['wg']))
 
     def parse_artifact(self, response):
         self.logger.info("ready to extract yang model from url: %s" %(response.url))
@@ -111,26 +116,25 @@ class IetfMainPageSpider(scrapy.Spider):
         extracted_yang = ye.get_extracted_models()
 
         if (len(extracted_yang) == 0):
-            self.logger.warning("extracted module from <%s> is empty" %(response.url))
+            self.logger.info("extracted module from <%s> is empty" %(response.url))
         else:
-            print("extracted yang model: [%s]" %(",".join(extracted_yang)))
-
+            self.logger.info("extracted yang model: [%s]" %(",".join(extracted_yang)))
+  
         # the yield is used to allow scrapy to save meta to a file.
         meta = {
             "area" : response.meta['area'],
             "wg"   : response.meta['wg'],
             "title": response.meta['model_name'],
+            "category" : response.meta['category'],
             "url"  : response.url,
             "yangs": extracted_yang
         }
-
-        print "title:------>", meta['title']
 
         yield meta
 
     def close(self, reason):
         print ("=====spider close=====")
-        print self.bad_urls
+        self.logger.info(self.bad_urls)
 
     def errback_area_request(self, failure):
         self.bad_urls['area'].append(failure.request.url)

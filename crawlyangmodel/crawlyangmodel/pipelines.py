@@ -22,7 +22,7 @@ class YangModelPipeline(object):
         for i in self.items:
             area = i['area']
             wg = i['wg']
-            obj = {"name": i['title'], 'url':i['url'],"models":i['yangs']}
+            obj = {"name": i['title'], 'url':i['url'],"models":i['yangs'],"category":i['category']}
             if result.has_key(area):
                 if result[area].has_key(wg):
                     result[area][wg].append(obj)
